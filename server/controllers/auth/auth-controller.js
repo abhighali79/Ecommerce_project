@@ -117,4 +117,34 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
-module.exports = { registerUser, loginUser, logoutUser, authMiddleware };
+//create admin temp
+const createAdmin = async (req, res) => {
+  try {
+    // Delete all users that conflict with admin credentials
+    await User.deleteMany({
+      $or: [{ email: "admin@gmail.com" }, { userName: "admin" }],
+    });
+
+    const hashPassword = await bcrypt.hash("admin123", 12);
+    const newAdmin = new User({
+      userName: "admin",
+      email: "admin@gmail.com",
+      password: hashPassword,
+      role: "admin",
+    });
+
+    await newAdmin.save();
+    res.status(200).json({
+      success: true,
+      message: "Admin created successfully (Conflicts cleared)",
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({
+      success: false,
+      message: "Error creating admin",
+    });
+  }
+};
+
+module.exports = { registerUser, loginUser, logoutUser, authMiddleware, createAdmin };
